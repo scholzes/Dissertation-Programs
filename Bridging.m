@@ -14,9 +14,17 @@ W = [2001:2100];
 % The columns of F are a Gaussian randomly generated frame.
 % The columns of G are the standard dual to F.
 
-F = (1/sqrt(n))*randn(n,N);
-S = F * F';
-G = S \ F;
+% F = (1/sqrt(n))*randn(n,N);
+% S = F * F';
+% G = S \ F;
+
+% To create a Parseval frame comment out lines 17-19
+% and uncomment lines **-**.
+
+F = randn(N,n);
+[F,~] = qr(F,0);
+F = F';
+G = F;
 
 % f is a random vector that we will try to recover 
 % from frame coefficient erasures.

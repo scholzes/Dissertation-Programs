@@ -7,12 +7,12 @@ clc;
 
 n = 2000;
 N = 3000;
-L = [1:900];
+L = [1:100];
 
-% The columns of F are a randomly generated frame.
+% The columns of F are a Gaussian randomly generated frame.
 % The columns of G are the standard dual to F.
 
-F = rand(n,N);
+F = (1/sqrt(n)) * randn(n,N);
 S = F * F';
 G = S \ F;
 
@@ -39,13 +39,11 @@ f_R = F * FC;
 % matrix.
 
 M = (F(:,L)' * G(:,L))';
-C = (eye(max(size(L))) - M) \ eye(max(size(L)));
+C = (eye(length(L)) - M) \ eye(length(L));
 
 % We compute the reconstruction.
 
-H = G(:,L)' * f_R;
-g = f_R;
-g = g + F(:,L) * C * H;
+g = f_R + F(:,L) * (C * (G(:,L)' * f_R));
 
 % We compute the \ell^2 norm of the error in the
 % reconstruction.

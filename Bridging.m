@@ -6,10 +6,10 @@ clc;
 % L = The Erasure Set
 % W = The Bridge Set
 
-n = 2000;
-N = 3000;
-L = [1:100];
-W = [2001:2100];
+n = 250;
+N = 1000;
+L = [1:10];
+W = [251:260];
 
 % The columns of F are a Gaussian randomly generated frame.
 % The columns of G are the standard dual to F.
@@ -30,14 +30,14 @@ G = S \ F;
 % from frame coefficient erasures.
 
 f = rand(n,1);
-f = f ./ norm(f,2);
+f = f ./ norm(f);
 
 % FC are the frame coefficients of f.
 
 FC = G' * f;
 
 % We erase the frame coefficients indexed by
-% L, 
+% L.
 
 FC(L) = zeros(size(L'));
 
@@ -62,4 +62,4 @@ g = g + F(:,L) * FC(L);
 % We compute the \ell^2 norm of the reconstruction
 % error.
 
-norm(f-g,2)
+norm(f-g)

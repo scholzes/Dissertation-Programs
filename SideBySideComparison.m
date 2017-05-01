@@ -4,12 +4,12 @@ clc;
 
 fprintf('Reading Image \n');
 
-COMPRESSION_PERCENT = 0.03; % Compressed Signal will be approximately
+COMPRESSION_PERCENT = 0.15; % Compressed Signal will be approximately
 % n = 256^2 * COMPRESSION_PERCENT dimensional.
 snr = .05;
 percenterasures = .05;
 
-Original_Image_Double = double(imread('Lena.bmp'));
+Original_Image_Double = double(imread('Pepper.bmp'));
 
 fprintf('Performing Image Compression \n');
 
@@ -19,12 +19,12 @@ n = round(COMPRESSION_PERCENT*256*256);
 LSC = Compressed_Image_Double(I(n+1:256*256));
 Compressed_Image_Double(I(n+1:256*256)) = [];
 
-N = 2*n+2000;
 m = 2000;
+N = 2*n+m;
 L = [1:round(percenterasures*N)];
 LC = setdiff([1:N],L);
 Times = zeros(1,5);
-Errors = zeros(1,7);
+Errors = zeros(1,8);
 
 f = Compressed_Image_Double;
 
@@ -34,17 +34,21 @@ A = randn(N,n+m);
 [A,~] = qr(A,0);
 
 F = sqrt(N/n)*A(:,1:n)';
-G = (n/N)*DF;
+G = (n/N)*F;
 M = sqrt(N/m)*A(:,n+1:n+m)';
 
 fprintf('Reconstructing Erasures \n');
 
 FC = G' * f;
+FCNonErased = FC;
 FC(L) = zeros(size(L'));
 noiselessf_R = F * FC;
 Errors(1) = norm(f-noiselessf_R);
 noise = randn(size(LC'));
 noise = snr * noise ./ norm(noise) * norm(FC(LC));
+FCNonErased(LC) = FCNonErased(LC) + noise;
+g_NonErased = F * FCNonErased;
+Errors(8) = norm(f - g_NonErased);
 FC(LC) = FC(LC) + noise;
 FC_NDB = FC;
 FC_RDI = FC;
@@ -57,6 +61,7 @@ Errors(2) = norm(f-f_R);
 % Nilpotent Double Bridging Reconstruction
 
 tic;
+W = [length(L)+1:3*length(L)];
 FRCL = G(:,L)' * f_R;
 FRCB = G(:,W)' * f_R;
 C_NDB = pinv(F(:,L)'*G(:,W))*(F(:,L)'*G(:,L));
@@ -69,38 +74,42 @@ Errors(3) = norm(f-g_NDB);
 
 tic;
 M_RDI = G(:,L)' * F(:,L);
-C_RDI = (eye(length(L)) - M_RDI) \ eye(length(L));
-g_RDI = f_R + F(:,L) * (C_RDI * (G(:,L)' * f_R));
+% C_RDI = (eye(length(L)) - M_RDI) \ eye(length(L));
+g_RDI = f_R + F(:,L) * ((eye(length(L)) - M_RDI) \ (G(:,L)' * f_R));
 Times(2) = toc;
 Errors(4) = norm(f-g_RDI);
 
 % Reduced Direct Inversion with Neumann Iterations
 
 tic;
+tolerance = 10^(-5);
 M_RDIN = G(:,L)' * F(:,L);
-Mnorm = norm(M_RDIN);
+toc;
+Mnorm = max(abs(eigs(M_RDIN)));
+toc;
 NumIter = round(log(tolerance*(1-Mnorm))/log(Mnorm));
-C_m = eye(length(L));
+g0 = G(:,L)' * f_R;
+Cg_RDIN = zeros(size(L'));
 for(j = 1:1:NumIter)
-    C_m = eye(length(L)) + M_RDIN * C_m;
+    Cg_RDIN = g0 + M_RDIN * Cg_RDIN;
 end
-g_RDIN = f_R + F(:,L) * (C_m * (G(:,L)' * f_R));
+g_RDIN = f_R + F(:,L) * Cg_RDIN;
 Times(3) = toc;
-Errors(5) = norm(f-g_RDIN)
+Errors(5) = norm(f-g_RDIN);
 
 
 % Erasure Recovery Matrices Reconstruction
 
 tic;
-FC_ERM(L) = -(M(:,L)' * M(:,L))\(M(:,L)' * (M(:,LC) * FC(LC)));
-g_ERM = f_R + F(:,L) * FC(L);
+FC_ERM(L) = -(M(:,L)' * M(:,L))\(M(:,L)' * (M(:,LC) * FC_ERM(LC)));
+g_ERM = f_R + F(:,L) * FC_ERM(L);
 Times(4) = toc;
 Errors(6) = norm(f-g_ERM);
 
 % FORC Method Reconstruction
 
 tic;
-g_FORC = (G(:,LC) * G(:,LC)') \ (G(:,LC) * FC_FORC)
+g_FORC = (G(:,LC) * G(:,LC)') \ (G(:,LC) * FC_FORC(LC));
 Times(5) = toc;
 Errors(7) = norm(f-g_FORC);
 
@@ -113,6 +122,12 @@ C_f(I1) = f;
 Uncompressed_f = ifft(C_f);
 Uncompressed_f = reshape(Uncompressed_f,[256,256]);
 J_f = uint8(Uncompressed_f);
+
+C_g_NonErased = zeros(256*256,1); % Compressed Image.
+C_g_NonErased(I1) = g_NonErased;
+Uncompressed_g_NonErased = ifft(C_g_NonErased);
+Uncompressed_g_NonErased = reshape(Uncompressed_g_NonErased,[256,256]);
+J_g_NonErased = uint8(Uncompressed_g_NonErased);
 
 C_noiselessf_R = zeros(256*256,1);
 C_noiselessf_R(I1(1:n)) = noiselessf_R;
@@ -158,15 +173,19 @@ J_g_FORC = uint8(Uncompressed_g_FORC);
 
 figure;
 
-subplot(2,5,2);
+subplot(2,5,1);
 imshow(J_f);
 title('Compressed Image');
 
 subplot(2,5,3);
+imshow(J_g_NonErased);
+title('Noise Only');
+
+subplot(2,5,4);
 imshow(J_noiselessf_R);
 title('Noise Free Partial Reconstruction');
 
-subplot(2,5,4);
+subplot(2,5,5);
 imshow(J_f_R);
 title('Noisy Partial Reconstruction');
 
@@ -190,8 +209,5 @@ subplot(2,5,10);
 imshow(J_g_FORC);
 title('FORC Method');
 
-
-
-
-
-
+Errors = Errors ./ norm(f)
+Times

@@ -6,7 +6,7 @@
 % L = The Erasure Set
 % tolerance = tolerance allowed in $\| C - C_m \|$
 
-tolerance = 10^(-12);
+tolerance = 10^(-8);
 n = 250;
 N = 1000;
 L = [1:100];
@@ -49,13 +49,16 @@ M = G(:,L)' * F(:,L);
 
 Mnorm = norm(M);
 NumIter = round(log(tolerance*(1-Mnorm))/log(Mnorm));
-C_m = eye(length(L));
+
+Cg0 = G(:,L)'*f_R;
+Cg = zeros(size(L'));
 for(j = 1:1:NumIter)
-    C_m = eye(length(L)) + M*C_m;
+    Cg = Cg0 + M * Cg;
 end
 
 % We compute the reconstruction
-g = f_R + F(:,L) * (C_m * (G(:,L)' * f_R));
+
+g = f_R + F(:,L) * Cg;
 
 % We compute the \ell^2 norm of the error in the
 % reconstruction.

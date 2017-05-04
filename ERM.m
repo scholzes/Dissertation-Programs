@@ -13,9 +13,8 @@ L = [1:10];
 % This block creates a Dual Frame pair (DF,EF), with erasure recovery matrix M
 % according to the GEGW construction algorithm for erasure recovery matrices.
 
-M = randn(N,m);
-[M,~] = qr(M,0);
-M = sqrt(N/m) * M';
+M = randn(m,N);
+M = 1 / sqrt(m) * M';
 A = [M',randn(N,n)];
 [A,~] = qr(A,0);
 F = A(:,m+1:m+n)';

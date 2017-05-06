@@ -14,7 +14,7 @@ L = [1:10];
 % according to the GEGW construction algorithm for erasure recovery matrices.
 
 M = randn(m,N);
-M = 1 / sqrt(m) * M';
+M = 1 / sqrt(m) * M;
 A = [M',randn(N,n)];
 [A,~] = qr(A,0);
 F = A(:,m+1:m+n)';

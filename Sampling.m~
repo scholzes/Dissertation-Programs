@@ -5,8 +5,8 @@
 t = [-12:.01:12]; % plot mesh
 p = .5; % sampling rate
 N = 10000; % approximation cutoff
-L = 16; % erasure set size
-W = 16; % bridge set size
+L = 200; % erasure set size
+W = 200; % bridge set size
 
 La = [1:1:L]+N+1; % erasure set
 Om = [-(L/2-1):0,L+1:3/2*L]+N+1; % bridge set

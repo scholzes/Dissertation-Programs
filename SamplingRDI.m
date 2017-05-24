@@ -58,7 +58,7 @@ figure;
 plot(t,f_B,'r');
 hold on;
 xlim([-12,12]);
-ylim([-0.75,1.1]);
+ylim([-0.3,1.1]);
 %plot(t,f_Rapprox,'r');
 %plot(t,f_R,'g')
 plot(t,sinc(pi*t),'--b');
